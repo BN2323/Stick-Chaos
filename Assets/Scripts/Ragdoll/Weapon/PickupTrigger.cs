@@ -17,7 +17,6 @@ public class PickupTrigger : MonoBehaviour
         if (picker)
         {
             picker.SetNearbyWeapon(weapon);
-            Debug.Log("Player entered pickup range");
         }
     }
 
@@ -29,7 +28,6 @@ public class PickupTrigger : MonoBehaviour
         if (picker)
         {
             picker.ClearNearbyWeapon(weapon);
-            Debug.Log("Player exited pickup range");
         }
     }
 

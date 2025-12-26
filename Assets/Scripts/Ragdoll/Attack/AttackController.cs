@@ -2,13 +2,24 @@ using UnityEngine;
 
 public class AttackController : MonoBehaviour
 {
+    public enum AttackPhase
+    {
+        Idle,
+        Windup,
+        Strike,
+        Recover
+    }
+
     [System.Serializable]
     public class JointMotorSettings
     {
-        public float strength = 10f;
-        public float damping = 5f;
-        public float maxTorque = 800f;
+        public float strength = 8f;
+        public float damping = 6f;
+        public float maxTorque = 600f;
     }
+
+    [Header("Weapon")]
+    public WeaponDamage weapon;
 
     [Header("Joints")]
     public HingeJoint2D shoulder;
@@ -18,35 +29,38 @@ public class AttackController : MonoBehaviour
     public JointMotorSettings shoulderMotor;
     public JointMotorSettings elbowMotor;
 
-    [Header("Attack")]
-    public float attackDuration = 0.18f;
-    public float elbowExtendAngle = -25f;
-    public float elbowDelay = 0.03f;
+    [Header("Attack Timings")]
+    public float windupTime = 0.08f;
+    public float strikeTime = 0.12f;
+    public float recoverTime = 0.18f;
 
-    bool attacking;
-    float timer;
+    [Header("Angles")]
+    public float elbowStrikeAngle = -35f;
+    public float elbowRestAngle = 0f;
+
+    AttackPhase phase = AttackPhase.Idle;
+    float phaseTimer;
 
     float shoulderTarget;
     float elbowTarget;
 
-    // ================================
-    // PUBLIC ENTRY POINT (Player / AI)
-    // ================================
+    // ============================
+    // PUBLIC ENTRY (Player / AI)
+    // ============================
     public void StartAttack(Vector2 targetWorld)
     {
-        if (attacking) return;
+        if (phase != AttackPhase.Idle)
+            return;
 
-        attacking = true;
-        timer = attackDuration;
-
-        // -------- SHOULDER AIM --------
+        // -------- Shoulder aim --------
         Vector2 dir =
             targetWorld - (Vector2)shoulder.transform.position;
 
         float worldAngle =
             Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
-        float baseAngle = shoulder.connectedBody
+        float baseAngle =
+            shoulder.connectedBody
             ? shoulder.connectedBody.rotation
             : 0f;
 
@@ -56,50 +70,54 @@ public class AttackController : MonoBehaviour
         shoulderTarget =
             ClampToLimits(shoulder, shoulderTarget);
 
-        // -------- ELBOW EXTEND --------
-        elbowTarget = elbowExtendAngle;
+        // -------- Start windup --------
+        elbowTarget = elbowRestAngle;
+        phase = AttackPhase.Windup;
+        phaseTimer = windupTime;
     }
 
     void FixedUpdate()
     {
-        if (!attacking)
+        switch (phase)
         {
-            DisableMotor(shoulder);
-            DisableMotor(elbow);
-            return;
-        }
+            case AttackPhase.Windup:
+                DriveJoint(shoulder, shoulderTarget, shoulderMotor);
+                DriveJoint(elbow, elbowRestAngle, elbowMotor);
 
-        timer -= Time.fixedDeltaTime;
+                TickPhase(AttackPhase.Strike, strikeTime);
+                break;
 
-        if (timer <= 0f)
-        {
-            attacking = false;
-            return;
-        }
+            case AttackPhase.Strike:
+                weapon?.BeginAttack();
+                DriveJoint(shoulder, shoulderTarget, shoulderMotor);
+                DriveJoint(elbow, elbowStrikeAngle, elbowMotor);
 
-        float elapsed = attackDuration - timer;
+                TickPhase(AttackPhase.Recover, recoverTime);
+                break;
 
-        // Shoulder always leads
-        DriveJoint(
-            shoulder,
-            shoulderTarget,
-            shoulderMotor
-        );
+            case AttackPhase.Recover:
+                weapon?.EndAttack();
+                DisableMotor(elbow);
+                DisableMotor(shoulder);
 
-        // Elbow follows slightly later
-        if (elapsed > elbowDelay)
-        {
-            DriveJoint(
-                elbow,
-                elbowTarget,
-                elbowMotor
-            );
+                TickPhase(AttackPhase.Idle, 0f);
+                break;
         }
     }
 
-    // ================================
-    // MOTOR DRIVE (PD CONTROLLER)
-    // ================================
+    // ============================
+    // HELPERS
+    // ============================
+    void TickPhase(AttackPhase next, float nextTime)
+    {
+        phaseTimer -= Time.fixedDeltaTime;
+        if (phaseTimer <= 0f)
+        {
+            phase = next;
+            phaseTimer = nextTime;
+        }
+    }
+
     void DriveJoint(
         HingeJoint2D joint,
         float target,
@@ -108,7 +126,6 @@ public class AttackController : MonoBehaviour
     {
         float current = joint.jointAngle;
         float error = Mathf.DeltaAngle(current, target);
-
         float angularVel =
             joint.attachedRigidbody.angularVelocity;
 
@@ -129,12 +146,37 @@ public class AttackController : MonoBehaviour
             joint.useMotor = false;
     }
 
-    float ClampToLimits(
-        HingeJoint2D joint,
-        float angle
-    )
+    float ClampToLimits(HingeJoint2D joint, float angle)
     {
         JointAngleLimits2D limits = joint.limits;
         return Mathf.Clamp(angle, limits.min, limits.max);
     }
+
+    public void EquipWeapon(WeaponDamage newWeapon)
+    {
+        if (!newWeapon)
+        {
+            Debug.LogError("EquipWeapon: newWeapon is null");
+            return;
+        }
+
+        // Disable old weapon
+        if (weapon != null)
+            weapon.EndAttack();
+
+        // Assign new weapon
+        weapon = newWeapon;
+
+        // Find owner health
+        Health myHealth = GetComponentInParent<Health>();
+        if (!myHealth)
+        {
+            Debug.LogError("EquipWeapon: Health not found on player");
+            return;
+        }
+
+        weapon.SetOwner(myHealth);
+    }
+
+
 }

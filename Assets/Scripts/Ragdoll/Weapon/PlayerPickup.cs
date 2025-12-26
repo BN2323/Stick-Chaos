@@ -6,13 +6,18 @@ public class PlayerPickup : MonoBehaviour
 
     WeaponPickup nearbyWeapon;
     WeaponPickup heldWeapon;
+    public AttackController attack;
+
+    void Awake()
+    {
+        attack = GetComponent<AttackController>();
+    }
 
     public void SetNearbyWeapon(WeaponPickup weapon)
     {
         if (weapon.IsHeld) return;
         nearbyWeapon = weapon;
         weapon.ShowText(true);
-        Debug.Log("True");
 
     }
 
@@ -20,7 +25,6 @@ public class PlayerPickup : MonoBehaviour
     {
         if (nearbyWeapon != weapon) return;
         weapon.ShowText(false);
-        Debug.Log("True");
         nearbyWeapon = null;
     }
 
@@ -30,11 +34,14 @@ public class PlayerPickup : MonoBehaviour
         {
             heldWeapon.Drop();
             heldWeapon = null;
+            attack.EquipWeapon(null);
+            return;
         }
-        else if (nearbyWeapon)
-        {
-            nearbyWeapon.PickUp(handSocket);
-            heldWeapon = nearbyWeapon;
-        }
+
+        if (!nearbyWeapon) return;
+        Health myHealth = GetComponentInParent<Health>();
+        nearbyWeapon.PickUp(handSocket, myHealth);
+        heldWeapon = nearbyWeapon;
     }
+
 }

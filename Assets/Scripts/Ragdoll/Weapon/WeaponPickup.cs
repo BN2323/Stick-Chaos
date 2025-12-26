@@ -4,18 +4,41 @@ public class WeaponPickup : MonoBehaviour
 {
     public GameObject pickupText;
     public Collider2D pickupTrigger;
+    public WeaponDamage weapon;
 
     bool held;
 
     Rigidbody2D rb;
     Collider2D physicalCollider;
 
+    // void Awake()
+    // {
+    //     rb = GetComponent<Rigidbody2D>();
+    //     physicalCollider = GetComponent<Collider2D>();
+    //     pickupText.SetActive(false);
+    //     weapon = GetComponent<WeaponDamage>();
+    // }
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         physicalCollider = GetComponent<Collider2D>();
         pickupText.SetActive(false);
+
+        weapon = GetComponent<WeaponDamage>();
+        Debug.Log($"[WeaponPickup] {name} same object WeaponDamage = {weapon}");
+
+        if (!weapon)
+        {
+            weapon = GetComponentInChildren<WeaponDamage>();
+            Debug.Log($"[WeaponPickup] {name} child WeaponDamage = {weapon}");
+        }
+
+        if (!weapon)
+        {
+            Debug.LogError($"[WeaponPickup] {name} NO WeaponDamage FOUND ANYWHERE");
+        }
     }
+
 
     public bool IsHeld => held;
 
@@ -25,10 +48,11 @@ public class WeaponPickup : MonoBehaviour
         pickupText.SetActive(show);
     }
 
-    public void PickUp(Transform handSocket)
+    public void PickUp(Transform handSocket, Health owner)
     {
         if (held) return;
         held = true;
+        weapon.SetOwner(owner);
 
         pickupText.SetActive(false);
         pickupTrigger.enabled = false;
@@ -54,15 +78,16 @@ public class WeaponPickup : MonoBehaviour
     }
 
 
-    public void Drop()
+        public void Drop()
     {
-        if (!held) return;
         held = false;
 
-        transform.SetParent(null);
+        if (weapon)
+            weapon.SetOwner(null); // 🔒 important
 
+        transform.SetParent(null);
         rb.simulated = true;
         physicalCollider.enabled = true;
-        pickupTrigger.enabled = true;
     }
+
 }

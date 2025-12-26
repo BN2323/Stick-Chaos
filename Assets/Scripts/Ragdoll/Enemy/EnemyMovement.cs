@@ -2,36 +2,36 @@ using UnityEngine;
 
 public class EnemyMovement : MonoBehaviour
 {
-    public Transform player;
-    public float moveSpeed = 2f;
-    public float stopDistance = 2.2f;
+    public float speed = 2.5f;
 
-    private Rigidbody2D rb;
+    public Rigidbody2D rb;
+    Vector2 moveTarget;
+    bool moving;
 
-    void Start()
+    // void Awake()
+    // {
+    //     rb = GetComponent<Rigidbody2D>();
+    // }
+
+    public void SetMove(bool value)
     {
-        rb = GetComponent<Rigidbody2D>();
+        moving = value;
+    }
 
-        if (!player)
-            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+    public void SetTarget(Vector2 target)
+    {
+        moveTarget = target;
     }
 
     void FixedUpdate()
     {
-        if (!player) return;
-
-        float distance = Vector2.Distance(transform.position, player.position);
-
-        if (distance > stopDistance)
+        if (!moving)
         {
-            // Walk toward player
-            Vector2 dir = (player.position - transform.position).normalized;
-            rb.velocity = new Vector2(dir.x * moveSpeed, rb.velocity.y);
-        }
-        else
-        {
-            // Stop when in attack range
             rb.velocity = new Vector2(0, rb.velocity.y);
+            return;
         }
+
+        float dir = Mathf.Sign(moveTarget.x - rb.position.x);
+        rb.velocity = new Vector2(dir * speed, rb.velocity.y);
     }
 }
