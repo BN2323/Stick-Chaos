@@ -11,32 +11,22 @@ public class WeaponPickup : MonoBehaviour
     Rigidbody2D rb;
     Collider2D physicalCollider;
 
-    // void Awake()
-    // {
-    //     rb = GetComponent<Rigidbody2D>();
-    //     physicalCollider = GetComponent<Collider2D>();
-    //     pickupText.SetActive(false);
-    //     weapon = GetComponent<WeaponDamage>();
-    // }
     void Awake()
     {
+        
         rb = GetComponent<Rigidbody2D>();
         physicalCollider = GetComponent<Collider2D>();
         pickupText.SetActive(false);
 
-        weapon = GetComponent<WeaponDamage>();
-        Debug.Log($"[WeaponPickup] {name} same object WeaponDamage = {weapon}");
-
+         if (!weapon) 
+            weapon = GetComponent<WeaponDamage>();
         if (!weapon)
-        {
             weapon = GetComponentInChildren<WeaponDamage>();
-            Debug.Log($"[WeaponPickup] {name} child WeaponDamage = {weapon}");
-        }
 
         if (!weapon)
-        {
             Debug.LogError($"[WeaponPickup] {name} NO WeaponDamage FOUND ANYWHERE");
-        }
+        else
+            Debug.Log($"[WeaponPickup] {name} WeaponDamage found: {weapon}");
     }
 
 
@@ -57,7 +47,8 @@ public class WeaponPickup : MonoBehaviour
         pickupText.SetActive(false);
         pickupTrigger.enabled = false;
 
-        rb.simulated = false;
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        physicalCollider.isTrigger = true;
         physicalCollider.enabled = false;
 
         Vector3 worldScale = transform.lossyScale;
@@ -74,20 +65,30 @@ public class WeaponPickup : MonoBehaviour
             worldScale.y / parentScale.y,
             worldScale.z / parentScale.z
         );
-        Debug.Log("pick me!");
     }
 
 
-        public void Drop()
+    public void Drop()
     {
         held = false;
 
         if (weapon)
-            weapon.SetOwner(null); // 🔒 important
-
+            weapon.SetOwner(null);
+        
+        rb.bodyType = RigidbodyType2D.Dynamic;
+        
+        pickupTrigger.enabled = true;
         transform.SetParent(null);
-        rb.simulated = true;
         physicalCollider.enabled = true;
+        physicalCollider.isTrigger = false;
     }
+
+    public WeaponDamage GetWeapon()
+    {
+        if (weapon == null)
+            weapon = GetComponent<WeaponDamage>() ?? GetComponentInChildren<WeaponDamage>();
+        return weapon;
+    }
+
 
 }

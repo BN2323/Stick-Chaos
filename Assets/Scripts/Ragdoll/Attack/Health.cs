@@ -31,6 +31,16 @@ public class Health : MonoBehaviour, IDamageable
             Die();
     }
 
+    public void Heal(int heal)
+    {
+        
+        current += heal;
+        if (current > maxHealth)
+        {
+            current = maxHealth;
+        }
+    }
+
     void Die()
     {
         if(team == Team.Enemy)
@@ -39,7 +49,7 @@ public class Health : MonoBehaviour, IDamageable
         }else
         {
             gameObject.SetActive(false);
-            GameObject.FindGameObjectWithTag("GameOver").SetActive(true);
+            // GameObject.FindGameObjectWithTag("GameOver").SetActive(true);
         }
     }
 }

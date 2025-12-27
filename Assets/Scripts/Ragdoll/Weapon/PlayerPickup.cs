@@ -16,6 +16,7 @@ public class PlayerPickup : MonoBehaviour
     public void SetNearbyWeapon(WeaponPickup weapon)
     {
         if (weapon.IsHeld) return;
+
         nearbyWeapon = weapon;
         weapon.ShowText(true);
 
@@ -39,9 +40,29 @@ public class PlayerPickup : MonoBehaviour
         }
 
         if (!nearbyWeapon) return;
+
         Health myHealth = GetComponentInParent<Health>();
-        nearbyWeapon.PickUp(handSocket, myHealth);
-        heldWeapon = nearbyWeapon;
+
+        // Save local reference
+        WeaponPickup weaponToPick = nearbyWeapon;
+
+        // Assign heldWeapon first
+        heldWeapon = weaponToPick;
+
+
+        if (heldWeapon)
+        {
+            // Pick it up
+            heldWeapon.PickUp(handSocket, myHealth);
+
+            // Use heldWeapon (or weaponToPick) for equipping
+            WeaponDamage wd = heldWeapon.GetWeapon();
+            if (wd)
+            {
+                attack.EquipWeapon(wd);
+            }
+        }
     }
+
 
 }

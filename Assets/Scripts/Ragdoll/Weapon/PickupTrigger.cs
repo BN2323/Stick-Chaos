@@ -16,6 +16,8 @@ public class PickupTrigger : MonoBehaviour
 
         if (picker)
         {
+         Debug.Log($"The Weapon is set:  {weapon.GetWeapon().name}");
+
             picker.SetNearbyWeapon(weapon);
         }
     }

@@ -88,6 +88,8 @@ public class AttackController : MonoBehaviour
                 break;
 
             case AttackPhase.Strike:
+                if(weapon) Debug.Log("PLAYER ATTACK Strike");
+                
                 weapon?.BeginAttack();
                 DriveJoint(shoulder, shoulderTarget, shoulderMotor);
                 DriveJoint(elbow, elbowStrikeAngle, elbowMotor);

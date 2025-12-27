@@ -14,13 +14,12 @@ public class WeaponDamage : MonoBehaviour
     void Awake()
     {
         col = GetComponent<Collider2D>();
-        col.enabled = false; // only active during attack
+        col.enabled = false;
     }
 
     public void SetOwner(Health newOwner)
     {
         owner = newOwner;
-        Debug.Log($"owner: {owner.GetTeam()}");
     }
 
     public void BeginAttack()
@@ -35,8 +34,12 @@ public class WeaponDamage : MonoBehaviour
         col.enabled = false;
     }
 
+
     void OnTriggerEnter2D(Collider2D other)
     {
+        {
+            
+        }
         if (owner == null)
         return;
         Health target =

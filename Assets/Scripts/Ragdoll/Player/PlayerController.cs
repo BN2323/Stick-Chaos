@@ -1,5 +1,8 @@
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerInput))]
+[RequireComponent(typeof(AttackController))]
+[RequireComponent(typeof(PlayerPickup))]
 public class PlayerController : MonoBehaviour
 {
     PlayerInput input;
@@ -24,7 +27,11 @@ public class PlayerController : MonoBehaviour
         if (input.AttackPressed)
         {
             attack.StartAttack(input.MouseWorld);
-            input.ConsumeAttack();
+            // input.ConsumeAttack();
+            Debug.Log("PLAYER ATTACK STARTED");
+            
         }
     }
 }
+
+
